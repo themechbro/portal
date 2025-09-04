@@ -1,9 +1,10 @@
 import { Typography } from "@mui/joy";
+import LoginForm from "./login-form";
 
 export default function Login() {
   return (
     <div>
-      <Typography variant="h2">Login Page!!</Typography>
+      <LoginForm />
     </div>
   );
 }

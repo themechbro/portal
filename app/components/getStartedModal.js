@@ -35,7 +35,7 @@ export default function GetStartedModal({ open, close }) {
             textAlign="center"
             sx={{ color: "#1e293b" }}
           >
-            🚀 Get Started
+            Get Started
           </Typography>
           {getStarted_modal_items.map((i) => {
             return (
