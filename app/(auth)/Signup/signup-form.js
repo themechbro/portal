@@ -13,11 +13,26 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useState } from "react";
 import InfoIcon from "@mui/icons-material/Info";
 
-export default function LoginForm() {
+export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordsMatch, setPasswordsMatch] = useState(false);
+
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
   };
+
+  const handlePasswordChange = (value) => {
+    setPassword(value);
+    setPasswordsMatch(value !== "" && value === confirmPassword);
+  };
+
+  const handleConfirmPasswordChange = (value) => {
+    setConfirmPassword(value);
+    setPasswordsMatch(password !== "" && password === value);
+  };
+
   return (
     <Box
       sx={{
@@ -38,7 +53,6 @@ export default function LoginForm() {
           boxShadow: "lg",
           backdropFilter: "blur(12px)",
           backgroundColor: "rgba(255, 255, 255, 0.8)",
-          borderRadius: "md",
         }}
       >
         {/* Title */}
@@ -51,13 +65,13 @@ export default function LoginForm() {
             color: "#1E1E2F",
           }}
         >
-          Welcome Back 👋
+          To Access CSIR IPU Portal, you need to Sign Up
         </Typography>
         <Typography
           level="body-md"
           sx={{ textAlign: "center", mb: 3, color: "text.secondary" }}
         >
-          Please log in to your account
+          Signing up is easy and only takes a few minutes.
         </Typography>
 
         {/* Form */}
@@ -66,34 +80,49 @@ export default function LoginForm() {
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <Input
+            type="text"
+            placeholder="Enter your Username"
+            size="lg"
+            variant="outlined"
+            sx={{ borderRadius: "lg", px: 2 }}
+          />
+          <Input
             type="email"
             placeholder="Enter your Email"
             size="lg"
             variant="outlined"
-            sx={{
-              borderRadius: "lg",
-              px: 2,
-            }}
+            sx={{ borderRadius: "lg", px: 2 }}
           />
           <Input
-            type={showPassword ? "text" : "password"}
+            type="password"
             placeholder="Enter your Password"
             size="lg"
             variant="outlined"
-            sx={{
-              borderRadius: "lg",
-              px: 2,
-            }}
+            sx={{ borderRadius: "lg", px: 2 }}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+          />
+          <Input
+            type={showPassword ? "text" : "password"}
+            placeholder="Retype your Password"
+            size="lg"
+            variant="outlined"
+            sx={{ borderRadius: "lg", px: 2 }}
             endDecorator={
               <IconButton onClick={handleTogglePassword} size="sm">
                 {showPassword ? (
                   <VisibilityOffIcon color="primary" />
                 ) : (
-                  <VisibilityIcon color="none" />
+                  <VisibilityIcon />
                 )}
               </IconButton>
             }
+            onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+            color={
+              passwordsMatch || confirmPassword === "" ? "neutral" : "danger"
+            }
           />
+
+          {/* Button disabled until passwords match */}
           <Button
             type="submit"
             fullWidth
@@ -103,37 +132,38 @@ export default function LoginForm() {
               borderRadius: "lg",
               color: "#fff",
               fontWeight: "bold",
-              "&:hover": {
-                opacity: 0.9,
-              },
+              "&:hover": { opacity: 0.9 },
             }}
+            disabled={!passwordsMatch}
           >
-            Log In
+            Sign Up
           </Button>
         </Box>
 
         {/* Divider */}
-        <Divider sx={{ my: 3 }}></Divider>
+        <Divider sx={{ my: 3 }} />
         <Box sx={{ textAlign: "center", mt: 3 }}>
           <Typography level="body-sm" sx={{ color: "text.secondary" }}>
-            <InfoIcon /> Forgot your password? Contact Administrator.
+            <InfoIcon /> Remember to use a strong password to keep your account
+            secure. If you forget your password, you can reset it by contacting
+            the administrator.
           </Typography>
         </Box>
 
-        <Divider sx={{ my: 3 }}></Divider>
+        <Divider sx={{ my: 3 }} />
         {/* Footer */}
         <Box sx={{ textAlign: "center", mt: 3 }}>
           <Typography level="body-sm" sx={{ color: "text.secondary" }}>
-            Don’t have an account?{" "}
+            Have an account already?{" "}
             <a
-              href="/Signup"
+              href="/Login"
               style={{
                 color: "#6366F1",
                 fontWeight: "bold",
                 textDecoration: "none",
               }}
             >
-              Sign Up
+              Login
             </a>
           </Typography>
         </Box>
