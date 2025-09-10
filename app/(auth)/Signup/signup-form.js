@@ -7,11 +7,17 @@ import {
   Typography,
   Divider,
   IconButton,
+  FormLabel,
+  FormHelperText,
+  FormControl,
+  Snackbar,
+  Alert,
 } from "@mui/joy";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { useState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import InfoIcon from "@mui/icons-material/Info";
+import { SignUpAction } from "./signup-action";
 
 export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +37,46 @@ export default function SignupForm() {
   const handleConfirmPasswordChange = (value) => {
     setConfirmPassword(value);
     setPasswordsMatch(password !== "" && password === value);
+  };
+
+  const Notifications = ({ open, message, color, close }) => {
+    return (
+      <Snackbar
+        open={open}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        autoHideDuration={5000}
+        onClose={close}
+      >
+        <Alert severity={color} variant="filled">
+          <Typography sx={{ fontFamily: "Roboto Condensed" }}>
+            {message}
+          </Typography>
+        </Alert>
+      </Snackbar>
+    );
+  };
+
+  const [formState, formAction, isPending] = useActionState(SignUpAction, {});
+  const [open, setOpen] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationColor, setNotificationColor] = useState("info");
+  const [passwordValue, setPasswordValue] = useState("");
+
+  useEffect(() => {
+    if (formState.errors) {
+      setNotificationColor("error");
+      setNotificationMessage(Object.values(formState.errors).join(", "));
+      setOpen(true);
+    } else if (formState.success) {
+      setNotificationColor("success");
+      setNotificationMessage("Signup successful!");
+      setOpen(true);
+    }
+  }, [formState]);
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") return;
+    setOpen(false);
   };
 
   return (
@@ -78,21 +124,49 @@ export default function SignupForm() {
         <Box
           component="form"
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          action={formAction}
         >
+          <FormLabel sx={{ fontWeight: "lg", color: "text.primary" }}>
+            Enter your username
+          </FormLabel>
           <Input
             type="text"
             placeholder="Enter your Username"
             size="lg"
             variant="outlined"
             sx={{ borderRadius: "lg", px: 2 }}
+            name="username"
           />
+          <FormLabel sx={{ fontWeight: "lg", color: "text.primary" }}>
+            Enter your Email Address
+          </FormLabel>
           <Input
             type="email"
             placeholder="Enter your Email"
             size="lg"
             variant="outlined"
             sx={{ borderRadius: "lg", px: 2 }}
+            name="email"
           />
+          <FormHelperText
+            sx={{ color: "text.secondary", mb: 1, fontStyle: "italic" }}
+          >
+            The email should be from the CSIR domain.
+          </FormHelperText>
+          <FormLabel sx={{ fontWeight: "lg", color: "text.primary" }}>
+            Enter your Full Name
+          </FormLabel>
+          <Input
+            type="text"
+            placeholder="Enter your Full Name"
+            size="lg"
+            variant="outlined"
+            sx={{ borderRadius: "lg", px: 2 }}
+            name="fullName"
+          />
+          <FormLabel sx={{ fontWeight: "lg", color: "text.primary" }}>
+            Enter your Password
+          </FormLabel>
           <Input
             type="password"
             placeholder="Enter your Password"
@@ -100,7 +174,11 @@ export default function SignupForm() {
             variant="outlined"
             sx={{ borderRadius: "lg", px: 2 }}
             onChange={(e) => handlePasswordChange(e.target.value)}
+            name="password"
           />
+          <FormLabel sx={{ fontWeight: "lg", color: "text.primary" }}>
+            Retype your Password
+          </FormLabel>
           <Input
             type={showPassword ? "text" : "password"}
             placeholder="Retype your Password"
@@ -120,6 +198,7 @@ export default function SignupForm() {
             color={
               passwordsMatch || confirmPassword === "" ? "neutral" : "danger"
             }
+            name="confirmPassword"
           />
 
           {/* Button disabled until passwords match */}
@@ -168,6 +247,12 @@ export default function SignupForm() {
           </Typography>
         </Box>
       </Card>
+      <Notifications
+        open={open}
+        color={notificationColor}
+        message={notificationMessage}
+        close={handleClose}
+      />
     </Box>
   );
 }

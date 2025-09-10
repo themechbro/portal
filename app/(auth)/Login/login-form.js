@@ -10,14 +10,42 @@ import {
 } from "@mui/joy";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { useState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import InfoIcon from "@mui/icons-material/Info";
+import { Snackbar, Alert } from "@mui/material"; // ✅ import added
+import { Login } from "./auth-action";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const handleTogglePassword = () => {
-    setShowPassword(!showPassword);
+  const handleTogglePassword = () => setShowPassword(!showPassword);
+
+  const [formState, formAction] = useActionState(Login, {});
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  // open snackbar automatically when state updates
+  useEffect(() => {
+    if (formState.errors || formState.success) {
+      setOpen(true);
+    }
+  }, [formState]);
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") return;
+    setOpen(false);
   };
+
+  // redirect on success
+  useEffect(() => {
+    if (formState.success) {
+      const timer = setTimeout(() => {
+        router.push("/home");
+      }, 1500); // wait a moment so snackbar shows
+      return () => clearTimeout(timer);
+    }
+  }, [formState.success, router]);
+
   return (
     <Box
       sx={{
@@ -38,10 +66,8 @@ export default function LoginForm() {
           boxShadow: "lg",
           backdropFilter: "blur(12px)",
           backgroundColor: "rgba(255, 255, 255, 0.8)",
-          borderRadius: "md",
         }}
       >
-        {/* Title */}
         <Typography
           level="h3"
           sx={{
@@ -63,65 +89,47 @@ export default function LoginForm() {
         {/* Form */}
         <Box
           component="form"
+          action={formAction} // ✅ hook up server action
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <Input
-            type="email"
-            placeholder="Enter your Email"
+            type="text"
+            placeholder="Enter your Username"
             size="lg"
             variant="outlined"
-            sx={{
-              borderRadius: "lg",
-              px: 2,
-            }}
+            sx={{ borderRadius: "lg", px: 2 }}
+            name="username"
           />
           <Input
             type={showPassword ? "text" : "password"}
             placeholder="Enter your Password"
             size="lg"
             variant="outlined"
-            sx={{
-              borderRadius: "lg",
-              px: 2,
-            }}
+            sx={{ borderRadius: "lg", px: 2 }}
             endDecorator={
               <IconButton onClick={handleTogglePassword} size="sm">
                 {showPassword ? (
                   <VisibilityOffIcon color="primary" />
                 ) : (
-                  <VisibilityIcon color="none" />
+                  <VisibilityIcon />
                 )}
               </IconButton>
             }
+            name="password"
           />
-          <Button
-            type="submit"
-            fullWidth
-            size="lg"
-            sx={{
-              mt: 1,
-              borderRadius: "lg",
-              color: "#fff",
-              fontWeight: "bold",
-              "&:hover": {
-                opacity: 0.9,
-              },
-            }}
-          >
+          <Button type="submit" fullWidth size="lg" sx={{ mt: 1 }}>
             Log In
           </Button>
         </Box>
 
-        {/* Divider */}
-        <Divider sx={{ my: 3 }}></Divider>
+        <Divider sx={{ my: 3 }} />
         <Box sx={{ textAlign: "center", mt: 3 }}>
           <Typography level="body-sm" sx={{ color: "text.secondary" }}>
             <InfoIcon /> Forgot your password? Contact Administrator.
           </Typography>
         </Box>
 
-        <Divider sx={{ my: 3 }}></Divider>
-        {/* Footer */}
+        <Divider sx={{ my: 3 }} />
         <Box sx={{ textAlign: "center", mt: 3 }}>
           <Typography level="body-sm" sx={{ color: "text.secondary" }}>
             Don’t have an account?{" "}
@@ -138,6 +146,19 @@ export default function LoginForm() {
           </Typography>
         </Box>
       </Card>
+
+      {/* Notifications */}
+      <Snackbar open={open} autoHideDuration={2000} onClose={handleClose}>
+        {formState.errors ? (
+          <Alert severity="error" onClose={handleClose}>
+            {Object.values(formState.errors).join(", ")}
+          </Alert>
+        ) : formState.success ? (
+          <Alert severity="success" onClose={handleClose}>
+            Logged in successfully. Redirecting to home page...
+          </Alert>
+        ) : null}
+      </Snackbar>
     </Box>
   );
 }
