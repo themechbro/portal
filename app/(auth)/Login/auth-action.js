@@ -24,7 +24,7 @@ export async function Login(prevState, formData) {
 
     if (!response.ok) {
       const data = await response.json();
-      return { errors: { server: data.error } };
+      return { errors: { server: data.err } };
     }
 
     return { success: true };

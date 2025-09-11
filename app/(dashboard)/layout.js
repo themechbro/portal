@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
+import Sidebar from "../components/sidebar";
+import DashboardHeader from "../components/Dasboard-header";
 
 async function fetchAuthData() {
   const cookieStore = await cookies();
@@ -33,7 +35,15 @@ async function fetchAuthData() {
 export default async function AuthLayout({ children }) {
   const authData = await fetchAuthData();
   if (!authData.isAuthenticated) {
-    redirect("/");
+    redirect("/Login?error=notLoggedIn");
   }
-  return <div className="flex h-screen w-full overflow-hidden">{children}</div>;
+  return (
+    <div className="flex h-screen w-full overflow-hidden">
+      <Sidebar className="w-[200px] bg-gray-800" />
+      <main className="flex-1 overflow-y-auto bg-gray-200">
+        <DashboardHeader />
+        {children}
+      </main>
+    </div>
+  );
 }

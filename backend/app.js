@@ -227,6 +227,70 @@ app.get("/protected", (req, res) => {
   });
 });
 
+// User Details Route
+app.get("/user-details", (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      sessionExists: !!req.session,
+    });
+  }
+
+  return res.status(200).json({
+    user_id: req.user.user_id,
+    username: req.user.username,
+    email: req.user.email,
+    attorney: req.user.attorney,
+    is_dark: req.user.is_dark,
+  });
+});
+
+// Logout Route
+app.post("/logout", logoutLimitter, async (req, res) => {
+  const username = req.user ? req.user.username : "Unknown user";
+
+  // If user is already logged out
+  if (!req.isAuthenticated()) {
+    console.log(`User "${username}" already logged out.`);
+    return res
+      .status(200)
+      .json({ message: "Already logged out", success: true });
+  }
+
+  req.logout(async (err) => {
+    if (err) {
+      console.error(`Error during logout for user "${username}":`, err);
+      return res
+        .status(500)
+        .json({ error: "Error logging out", success: false });
+    }
+
+    req.session.destroy(async (err) => {
+      if (err) {
+        console.error(`Error destroying session for "${username}":`, err);
+        return res
+          .status(500)
+          .json({ error: "Error clearing session", success: false });
+      }
+
+      // Clear session cookie
+      res.clearCookie("sessionId", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        domain:
+          process.env.NODE_ENV === "production" ? "172.16.2.233" : undefined,
+      });
+
+      console.log(`User "${username}" successfully logged out.`);
+      return res
+        .status(200)
+        .json({ message: "Logged out successfully", success: true });
+    });
+  });
+});
+
 // LISTENiNG SERVER
 app.listen(8000, "0.0.0.0", () => {
   console.log("Server running on http://0.0.0.0:8000");
