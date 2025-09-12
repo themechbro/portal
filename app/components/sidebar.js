@@ -42,11 +42,12 @@ export default function Sidebar() {
           width: isOpen ? drawerWidth : 72,
           transition: "width 0.3s ease-in-out",
           boxSizing: "border-box",
-          backgroundColor: "#f8fafc",
+          backgroundColor: "#121621",
           transition: "background-color 0.5s ease-in",
           borderRight: "1px solid rgba(0, 0, 0, 0.08)",
           boxShadow: isOpen ? "4px 0 8px rgba(0, 0, 0, 0.05)" : "none",
           overflowX: "hidden",
+          border: "1px solid grey",
         },
       }}
       variant="permanent"
@@ -56,7 +57,7 @@ export default function Sidebar() {
         sx={{
           minHeight: "80px",
           padding: "16px",
-          backgroundColor: "white",
+          backgroundColor: "#121621",
           transition: "background-color 0.5s ease-in",
         }}
       >
@@ -66,7 +67,7 @@ export default function Sidebar() {
             display: "flex",
             alignItems: "center",
             justifyContent: isOpen ? "space-between" : "center",
-            backgroundColor: "#fff",
+            backgroundColor: "#121621",
             transition: "background-color 0.5s ease-in",
           }}
         >
@@ -85,7 +86,7 @@ export default function Sidebar() {
                   sx={{
                     fontFamily: "Roboto Condensed",
                     fontWeight: 600,
-                    color: "#64748b",
+                    color: "#ffffffff",
                   }}
                 >
                   Patent Filing Portal
@@ -96,11 +97,15 @@ export default function Sidebar() {
                 onClick={handleClick}
                 sx={{
                   "&:hover": {
-                    backgroundColor: "#f1f5f9",
+                    backgroundColor: "#5a5e63ff",
                   },
                 }}
               >
-                <ChevronLeftIcon />
+                <ChevronLeftIcon
+                  style={{
+                    color: "#FFF",
+                  }}
+                />
               </IconButton>
             </>
           ) : (
@@ -109,11 +114,15 @@ export default function Sidebar() {
               onClick={handleClick2}
               sx={{
                 "&:hover": {
-                  backgroundColor: "#f1f5f9",
+                  backgroundColor: "#5a5e63ff",
                 },
               }}
             >
-              <MenuIcon />
+              <MenuIcon
+                style={{
+                  color: "#FFF",
+                }}
+              />
             </IconButton>
           )}
         </Box>
@@ -151,7 +160,7 @@ export default function Sidebar() {
                     sx={{
                       borderRadius: "8px",
                       "&:hover": {
-                        backgroundColor: isActive ? "#1565c0" : "#e2e8f0",
+                        backgroundColor: isActive ? "#1565c0" : "#615e5eff",
                       },
                       minHeight: "48px",
                       backgroundColor: isActive ? "#1976d2" : "transparent", // Explicitly set the background color
@@ -160,7 +169,7 @@ export default function Sidebar() {
                     <ListItemIcon
                       sx={{
                         minWidth: isOpen ? "56px" : "24px",
-                        color: isActive ? "#fff" : "#64748b",
+                        color: isActive ? "#fff" : "#ffffffff",
                       }}
                     >
                       {item.icon}
@@ -170,7 +179,7 @@ export default function Sidebar() {
                         primary={item.name}
                         sx={{
                           "& .MuiListItemText-primary": {
-                            color: isActive ? "#000000ff" : "#4d4c50ff",
+                            color: isActive ? "#000000ff" : "#ffffffff",
                             fontWeight: 500,
                           },
                         }}

@@ -10,7 +10,7 @@ export default function FilingCards() {
         mt: 8,
         px: 4,
         p: 3,
-        width: "100%",
+        width: "auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
