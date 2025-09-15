@@ -103,14 +103,13 @@ passport.use(
 
 // Serialize and Deserialize User
 passport.serializeUser((user, done) => {
-  console.log("Serializing user:", user); // Debugging line
-  done(null, user.username);
+  done(null, user.user_id);
 });
 
-passport.deserializeUser(async (username, done) => {
+passport.deserializeUser(async (user_id, done) => {
   try {
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      username,
+    const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+      user_id,
     ]);
     const user = result.rows[0];
     if (!user) {
@@ -295,6 +294,7 @@ app.post("/logout", logoutLimitter, async (req, res) => {
 
 app.post("/patents", async (req, res) => {
   const client = await pool.connect();
+  const user = req.user.user_id;
   try {
     const { patent, inventors } = req.body;
 
@@ -319,8 +319,8 @@ app.post("/patents", async (req, res) => {
         nf_no, lab_code, title_of_invention, type_of_invention,
         subject_of_invention, industrial_application, country_to_be_filed,
         nba_approved, specification_available, softcopies_available,
-        form1_available, idf_available, created_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+        form1_available, idf_available, created_at, filed_by
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),$13)
     `;
     await client.query(patentQuery, [
       nf_no,
@@ -335,6 +335,7 @@ app.post("/patents", async (req, res) => {
       patent.softCopiesAvailable,
       patent.form1Available,
       patent.idfAvailable,
+      user,
     ]);
 
     // Insert inventors
