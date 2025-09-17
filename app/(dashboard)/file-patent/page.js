@@ -80,8 +80,9 @@
 //     </Box>
 //   );
 // }
-
+// Two---------------------------------
 "use client";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Stepper,
@@ -98,6 +99,7 @@ import InventorsForm from "./inventors-form";
 import ReviewForm from "./review-form";
 
 export default function PatentStepper() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     patent: {},
@@ -145,6 +147,9 @@ export default function PatentStepper() {
           color: "success",
           progress: 100,
         });
+        setTimeout(() => {
+          router.push("/"); // redirect to homepage
+        }, 2500);
       })
       .catch((err) => {
         setSnackbar({
