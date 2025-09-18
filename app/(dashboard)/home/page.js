@@ -3,6 +3,7 @@ import { Toolbar } from "@mui/material";
 import Link from "next/link";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FilingCards from "@/app/components/filing-card";
+import AppliedPatentsTable from "@/app/components/appliedPatentsTable";
 
 export default function HomePage() {
   return (
@@ -32,6 +33,7 @@ export default function HomePage() {
         </Toolbar>
       </Box>
       <FilingCards />
+      <AppliedPatentsTable />
     </Box>
   );
 }

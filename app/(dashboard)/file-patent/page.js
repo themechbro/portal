@@ -97,6 +97,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PatentFilingForm from "./patent-file-form";
 import InventorsForm from "./inventors-form";
 import ReviewForm from "./review-form";
+import UploadDocumentsForm from "./upload-folder";
 
 export default function PatentStepper() {
   const router = useRouter();
@@ -112,14 +113,28 @@ export default function PatentStepper() {
     progress: 0,
   });
 
-  const steps = ["Patent Filing", "Inventors", "Review"];
+  const steps = ["Patent Filing", "Upload Documents", "Inventors", "Review"];
 
   const handleNext = () =>
     setStep((prev) => Math.min(prev + 1, steps.length - 1));
   const handleBack = () => setStep((prev) => Math.max(prev - 1, 0));
 
   const handleSubmit = () => {
-    // Show snackbar immediately with progress bar
+    const data = new FormData();
+    data.append("patent", JSON.stringify(formData.patent));
+    data.append("inventors", JSON.stringify(formData.inventors));
+
+    if (formData.patent.nbaFile)
+      data.append("nbaFile", formData.patent.nbaFile);
+    if (formData.patent.specificationFile)
+      data.append("specificationFile", formData.patent.specificationFile);
+    if (formData.patent.form1File)
+      data.append("form1File", formData.patent.form1File);
+    if (formData.patent.idfFile)
+      data.append("idfFile", formData.patent.idfFile);
+    if (formData.patent.softCopiesFile)
+      data.append("softCopiesFile", formData.patent.softCopiesFile);
+
     setSnackbar({
       open: true,
       message: "Submitting patent...",
@@ -129,8 +144,7 @@ export default function PatentStepper() {
 
     fetch(`${process.env.NEXT_PUBLIC_HOST_IP}/patents`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: data, // <-- no JSON.stringify here
       credentials: "include",
     })
       .then(async (res) => {
@@ -147,9 +161,7 @@ export default function PatentStepper() {
           color: "success",
           progress: 100,
         });
-        setTimeout(() => {
-          router.push("/"); // redirect to homepage
-        }, 2500);
+        setTimeout(() => router.push("/"), 2500);
       })
       .catch((err) => {
         setSnackbar({
@@ -212,6 +224,14 @@ export default function PatentStepper() {
         />
       )}
       {step === 1 && (
+        <UploadDocumentsForm
+          patentData={formData.patent}
+          onUpdate={(updatedPatent) =>
+            setFormData((prev) => ({ ...prev, patent: updatedPatent }))
+          }
+        />
+      )}
+      {step === 2 && (
         <InventorsForm
           inventors={formData.inventors}
           onUpdate={(data) =>
@@ -219,7 +239,7 @@ export default function PatentStepper() {
           }
         />
       )}
-      {step === 2 && <ReviewForm data={formData} />}
+      {step === 3 && <ReviewForm data={formData} />}
 
       {/* Navigation Buttons */}
       <Box sx={{ mt: 3, display: "flex", gap: 2 }}>

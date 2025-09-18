@@ -10,12 +10,12 @@ export default function FilingCards() {
         mt: 8,
         px: 4,
         p: 3,
-        width: "auto",
+        width: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         gap: 4,
-        border: "3px dashed #3e4a50ff",
+        // border: "3px dashed #3e4a50ff",
         borderRadius: 3,
       }}
     >

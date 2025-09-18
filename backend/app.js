@@ -45,7 +45,7 @@ const logoutLimitter = rateLimit({
 
 //storage
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Middleware
 app.use(bodyParser.json());
@@ -290,86 +290,255 @@ app.post("/logout", logoutLimitter, async (req, res) => {
   });
 });
 
-// Patent file route
+//Patent Filed Table
+app.get("/getAppliedPatentsforTable", async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized. Please log in." });
+  }
 
-app.post("/patents", async (req, res) => {
-  const client = await pool.connect();
-  const user = req.user.user_id;
+  const page = parseInt(req.query.page) || 0;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+  const offset = page * pageSize;
+
   try {
-    const { patent, inventors } = req.body;
-
-    if (
-      !patent?.labCode ||
-      !patent?.titleOfInvention ||
-      !patent?.typeOfInvention ||
-      !patent?.countryTobeFiled ||
-      !Array.isArray(inventors)
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    // Generate NF_NO
-    const nf_no = generateNFNO();
-
-    await client.query("BEGIN");
-
-    // Insert into patents
-    const patentQuery = `
-      INSERT INTO patents (
-        nf_no, lab_code, title_of_invention, type_of_invention,
-        subject_of_invention, industrial_application, country_to_be_filed,
-        nba_approved, specification_available, softcopies_available,
-        form1_available, idf_available, created_at, filed_by
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),$13)
+    // Fetch the patents for this user with pagination
+    const dataQuery = `
+      SELECT nf_no, title_of_invention, type_of_invention, subject_of_invention, created_at
+      FROM patents
+      WHERE filed_by = $1
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET $3
     `;
-    await client.query(patentQuery, [
-      nf_no,
-      patent.labCode,
-      patent.titleOfInvention,
-      patent.typeOfInvention,
-      patent.subjectOfInvention,
-      patent.industrialApplication,
-      patent.countryTobeFiled,
-      patent.nbaApproved,
-      patent.specificationAvailable,
-      patent.softCopiesAvailable,
-      patent.form1Available,
-      patent.idfAvailable,
-      user,
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM patents
+      WHERE filed_by = $1
+    `;
+
+    const [dataResult, countResult] = await Promise.all([
+      pool.query(dataQuery, [user.user_id, pageSize, offset]),
+      pool.query(countQuery, [user.user_id]),
     ]);
 
-    // Insert inventors
-    const inventorQuery = `
-      INSERT INTO inventors (
-        nf_no, name, gender, nationality, city, state, country, pincode, lab_code
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-    `;
+    const patents = dataResult.rows;
+    const total = parseInt(countResult.rows[0].total, 10);
 
-    for (let inv of inventors) {
-      await client.query(inventorQuery, [
-        nf_no,
-        inv.name,
-        inv.gender,
-        inv.nationality,
-        inv.city,
-        inv.state,
-        inv.country,
-        inv.pincode,
-        inv.labCode,
-      ]);
-    }
-
-    await client.query("COMMIT");
-
-    res.json({ message: "Patent and inventors added successfully", nf_no });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    client.release();
+    res.json({
+      patents,
+      total,
+      page,
+      pageSize,
+    });
+  } catch (error) {
+    console.error("Error fetching applied patents:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Patent file route
+// app.post("/patents", async (req, res) => {
+//   const client = await pool.connect();
+//   const user = req.user.user_id;
+//   try {
+//     const { patent, inventors } = req.body;
+
+//     if (
+//       !patent?.labCode ||
+//       !patent?.titleOfInvention ||
+//       !patent?.typeOfInvention ||
+//       !patent?.countryTobeFiled ||
+//       !Array.isArray(inventors)
+//     ) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     // Generate NF_NO
+//     const nf_no = generateNFNO();
+
+//     await client.query("BEGIN");
+
+//     // Insert into patents
+//     const patentQuery = `
+//       INSERT INTO patents (
+//         nf_no, lab_code, title_of_invention, type_of_invention,
+//         subject_of_invention, industrial_application, country_to_be_filed,
+//         nba_approved, specification_available, softcopies_available,
+//         form1_available, idf_available, created_at, filed_by
+//       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),$13)
+//     `;
+//     await client.query(patentQuery, [
+//       nf_no,
+//       patent.labCode,
+//       patent.titleOfInvention,
+//       patent.typeOfInvention,
+//       patent.subjectOfInvention,
+//       patent.industrialApplication,
+//       patent.countryTobeFiled,
+//       patent.nbaApproved,
+//       patent.specificationAvailable,
+//       patent.softCopiesAvailable,
+//       patent.form1Available,
+//       patent.idfAvailable,
+//       user,
+//     ]);
+
+//     // Insert inventors
+//     const inventorQuery = `
+//       INSERT INTO inventors (
+//         nf_no, name, gender, nationality, city, state, country, pincode, lab_code
+//       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+//     `;
+
+//     for (let inv of inventors) {
+//       await client.query(inventorQuery, [
+//         nf_no,
+//         inv.name,
+//         inv.gender,
+//         inv.nationality,
+//         inv.city,
+//         inv.state,
+//         inv.country,
+//         inv.pincode,
+//         inv.labCode,
+//       ]);
+//     }
+
+//     await client.query("COMMIT");
+
+//     res.json({ message: "Patent and inventors added successfully", nf_no });
+//   } catch (err) {
+//     await client.query("ROLLBACK");
+//     console.error(err);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   } finally {
+//     client.release();
+//   }
+// });
+
+app.post(
+  "/patents",
+  upload.fields([
+    { name: "nbaFile", maxCount: 1 },
+    { name: "specificationFile", maxCount: 1 },
+    { name: "form1File", maxCount: 1 },
+    { name: "idfFile", maxCount: 1 },
+    { name: "softCopiesFile", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    const client = await pool.connect();
+    const user = req.user.user_id;
+
+    try {
+      // Parse the JSON text fields
+      const patent = JSON.parse(req.body.patent);
+      const inventors = JSON.parse(req.body.inventors);
+
+      if (
+        !patent?.labCode ||
+        !patent?.titleOfInvention ||
+        !patent?.typeOfInvention ||
+        !patent?.countryTobeFiled ||
+        !Array.isArray(inventors)
+      ) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Generate NF_NO
+      const nf_no = generateNFNO();
+
+      await client.query("BEGIN");
+
+      // Extract files from req.files
+      const nbaFile = req.files["nbaFile"]?.[0];
+      const specificationFile = req.files["specificationFile"]?.[0];
+      const form1File = req.files["form1File"]?.[0];
+      const idfFile = req.files["idfFile"]?.[0];
+      const softCopiesFile = req.files["softCopiesFile"]?.[0];
+
+      // Insert into patents
+      const patentQuery = `
+        INSERT INTO patents (
+          nf_no, lab_code, title_of_invention, type_of_invention,
+          subject_of_invention, industrial_application, country_to_be_filed,
+          nba_approved, specification_available, softcopies_available,
+          form1_available, idf_available, created_at, filed_by,
+          nba_file, nba_filename, nba_mimetype,
+          specification_file, specification_filename, specification_mimetype,
+          form1_file, form1_filename, form1_mimetype,
+          idf_file, idf_filename, idf_mimetype,
+          softcopies_file, softcopies_filename, softcopies_mimetype
+        ) VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),$13,
+          $14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28
+        )
+      `;
+
+      await client.query(patentQuery, [
+        nf_no,
+        patent.labCode,
+        patent.titleOfInvention,
+        patent.typeOfInvention,
+        patent.subjectOfInvention,
+        patent.industrialApplication,
+        patent.countryTobeFiled,
+        patent.nbaApproved,
+        patent.specificationAvailable,
+        patent.softCopiesAvailable,
+        patent.form1Available,
+        patent.idfAvailable,
+        user,
+        // files:
+        nbaFile?.buffer,
+        nbaFile?.originalname,
+        nbaFile?.mimetype,
+        specificationFile?.buffer,
+        specificationFile?.originalname,
+        specificationFile?.mimetype,
+        form1File?.buffer,
+        form1File?.originalname,
+        form1File?.mimetype,
+        idfFile?.buffer,
+        idfFile?.originalname,
+        idfFile?.mimetype,
+        softCopiesFile?.buffer,
+        softCopiesFile?.originalname,
+        softCopiesFile?.mimetype,
+      ]);
+
+      // Insert inventors
+      const inventorQuery = `
+        INSERT INTO inventors (
+          nf_no, name, gender, nationality, city, state, country, pincode, lab_code
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      `;
+
+      for (const inv of inventors) {
+        await client.query(inventorQuery, [
+          nf_no,
+          inv.name,
+          inv.gender,
+          inv.nationality,
+          inv.city,
+          inv.state,
+          inv.country,
+          inv.pincode,
+          inv.labCode,
+        ]);
+      }
+
+      await client.query("COMMIT");
+
+      res.json({ message: "Patent and inventors added successfully", nf_no });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
+    }
+  }
+);
 
 //generate nf_no
 function generateNFNO() {
