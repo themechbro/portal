@@ -336,6 +336,109 @@ app.get("/getAppliedPatentsforTable", async (req, res) => {
   }
 });
 
+//View-Patent through nf_no
+app.get("/view-patent", async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(502).json({
+      message: "Bad Gateway!",
+    });
+  }
+
+  const { nf_no } = req.query;
+
+  try {
+    const query = `SELECT * FROM patents WHERE nf_no=$1 AND filed_by=$2`;
+    const data = await pool.query(query, [nf_no, user.user_id]);
+    const result = data.rows;
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Patent not found" });
+    }
+
+    // split data into patentDetails + fileDetails
+    const separatedData = result.map((item) => {
+      const {
+        // patent details
+        nf_no,
+        lab_code,
+        title_of_invention,
+        type_of_invention,
+        subject_of_invention,
+        industrial_application,
+        country_to_be_filed,
+        nba_approved,
+        form1_available,
+        specification_available,
+        softcopies_available,
+        idf_available,
+        created_at,
+        filed_by,
+
+        // file-related fields
+        nba_file,
+        idf_file,
+        specification_file,
+        form1_file,
+        softcopies_file,
+        nba_filename,
+        idf_filename,
+        specification_filename,
+        form1_filename,
+        nba_mimetype,
+        idf_mimetype,
+        specification_mimetype,
+        form1_mimetype,
+        softcopies_filename,
+        softcopies_mimetype,
+      } = item;
+
+      const patentDetails = {
+        nf_no,
+        lab_code,
+        title_of_invention,
+        type_of_invention,
+        subject_of_invention,
+        industrial_application,
+        country_to_be_filed,
+        nba_approved,
+        form1_available,
+        specification_available,
+        softcopies_available,
+        idf_available,
+        created_at,
+        filed_by,
+      };
+
+      const fileDetails = {
+        nba_file,
+        nba_filename,
+        nba_mimetype,
+        idf_file,
+        idf_filename,
+        idf_mimetype,
+        specification_file,
+        specification_filename,
+        specification_mimetype,
+        form1_file,
+        form1_filename,
+        form1_mimetype,
+        softcopies_file,
+        softcopies_filename,
+        softcopies_mimetype,
+      };
+
+      return { patentDetails, fileDetails };
+    });
+
+    // send back as JSON
+    res.json({ data: separatedData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Patent file route
 // app.post("/patents", async (req, res) => {
 //   const client = await pool.connect();

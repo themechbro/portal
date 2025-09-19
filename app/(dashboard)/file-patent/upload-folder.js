@@ -96,6 +96,7 @@ export default function UploadDocumentsForm({ patentData, onUpdate }) {
               type="file"
               hidden
               onChange={(e) => handleFileChange(fieldKey, e.target.files[0])}
+              accept=".pdf,.doc,.docx,.png,.jpeg,.csv,.eml,.xlsx,.rtf"
             />
           </Button>
         )}

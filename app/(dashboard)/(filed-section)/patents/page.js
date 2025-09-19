@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Typography, CircularProgress } from "@mui/joy";
+import { useRouter } from "next/navigation";
 
 export default function AppliedPatentsTable() {
   const [patents, setPatents] = useState([]);
@@ -11,7 +12,7 @@ export default function AppliedPatentsTable() {
     pageSize: 5,
   });
   const [rowCount, setRowCount] = useState(0);
-
+  const router = useRouter();
   const fetchPatents = async (page, pageSize) => {
     setLoading(true);
     try {
@@ -71,6 +72,11 @@ export default function AppliedPatentsTable() {
     },
   ];
 
+  const handleRowClick = (params) => {
+    const nf_no = params.row.nf_no;
+    router.push(`/viewPatent/${nf_no}`);
+  };
+
   return (
     <Box sx={{ height: 500, width: "100%", p: 4 }}>
       <Typography
@@ -115,6 +121,7 @@ export default function AppliedPatentsTable() {
               fontFamily: "Roboto Condensed",
             },
           }}
+          onRowClick={handleRowClick}
         />
       )}
     </Box>

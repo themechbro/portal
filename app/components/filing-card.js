@@ -7,9 +7,9 @@ export default function FilingCards() {
   return (
     <Box
       sx={{
-        mt: 8,
+        mt: 3,
         px: 4,
-        p: 3,
+
         width: "100%",
         display: "flex",
         flexDirection: "column",
